@@ -1,0 +1,97 @@
+app:
+  version: 0.0.5.2-SNAPSHOT
+server:
+  port: 8002
+  servlet:
+    session:
+      cookie:
+        name: simonCAM_server
+spring:
+  main:
+    allow-circular-references: true
+  banner:
+    location: classpath:banner.txt
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    # time-zone: GMT+8
+    # 默认获取服务器时区，释放以上参数，指定时区
+dev:
+  server:
+    port: 8081
+  discover:
+    topic: simonCAM-server
+    client-topic: simonCAM-client
+    multicast-group: 224.0.0.5
+    multicast-port: 8000
+    as-ap-port: 8001
+    enable: true
+  video:
+    stream:
+      # UDP
+      port: 8004
+    http-server:
+      #TCP
+      port: 8003
+      # 发送超时时间
+      so-send-timeout: 500
+    udp:
+      push-server:
+        #UDP
+        port: 8003
+      buffer:
+        pool-size: 500
+        # 最大的缓冲池大小
+        max-pool-size: 3000
+      dispatcher:
+        # 双核先跑着吧,反正服务器带宽也不够，太大反而慢
+        pool-size: 4
+        priority: 7
+      frame-handle:
+        delay: 300
+      channel:
+        # 最大摄像头数量
+        count: 128
+  auth:
+    so:
+      timeout: 5000
+    default:
+      dev-username: simon
+      dev-password: simon
+      user-account: admin
+      user-password: simon123
+      user-remark: 管理员，由系统生成
+admin:
+  permission:
+    urls:
+      - /user/addUser
+      - /user/unlockUser
+      - /user/changeUserStatus
+      - /user/deleteUser
+      - /user/resetPassword
+
+# 一些系统参数的默认值，不会覆盖数据库字段
+system-settings:
+  defaultSettings:
+    # 客户端的使用的视频端口，可能会在nat后变化，需要手动指定。
+    clientVideoPort: 8003
+p2p:
+  server:
+    port: 9000
+    enable: false
+nbi:
+  server:
+    port: 8008
+cache:
+  data:
+    date-format: yyyy-MM-dd HH:mm:ss
+user:
+  login:
+    lock-timeout: 1800000
+logging:
+  level:
+    root: info
+  pattern:
+    console: "[%d{ yyyy-MM-dd HH:mm:ss:SSS }] %thread %level %red([%C{1}]) %boldYellow(%line) %msg %n"
+  file:
+    name: ./log/simonCAM_out.log
+

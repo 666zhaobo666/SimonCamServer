@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="webVideoServer" class="org.btik.video.server.push.web.BioHttpVideoServer">
+        <property name="asyncTaskExecutor" ref="asyncTaskExecutor"/>
+        <property name="httpPort" value="${dev.video.http-server.port}"/>
+        <property name="devChannel" ref="deviceVideoStreamChannel"/>
+        <property name="videoChannelFactory" ref="videoChannelFactory"/>
+    </bean>
+    <bean id="udpRawVideoServer" class="org.btik.video.server.push.udp.RawUdpVideoServer">
+        <property name="videoChannelFactory" ref="videoChannelFactory"/>
+        <property name="pushPort" value="${dev.video.udp.push-server.port}"/>
+        <property name="name" value="udpRawVideoServer"/>
+    </bean>
+    <bean id="asyncTaskExecutor" class="org.btik.app.tool.AsyncTaskExecutor"/>
+    <bean id="udpBufferPool" class="org.btik.video.server.device.udp2.BufferPool">
+        <property name="bufferPoolSize" value="${dev.video.udp.buffer.pool-size}"/>
+        <property name="maxPoolSize" value="${dev.video.udp.buffer.max-pool-size}"/>
+    </bean>
+    <bean id="soSendTimeoutTicker" class="org.btik.video.server.push.web.SoSendTimeoutTicker">
+        <property name="videoChannelCount" value="${dev.video.udp.channel.count}"/>
+        <property name="timeout" value="${dev.video.http-server.so-send-timeout}"/>
+    </bean>
+    <bean id="deviceVideoStreamChannel" class="org.btik.video.server.device.udp2.NewUDPDeviceChannel">
+        <property name="streamPort" value="${dev.video.stream.port}"/>
+        <property name="bufferPool" ref="udpBufferPool"/>
+        <property name="dispatcherPoolSize" value="${dev.video.udp.dispatcher.pool-size}"/>
+        <property name="frameDelayTimeout" value="${dev.video.udp.frame-handle.delay}"/>
+        <property name="videoChannelCount" value="${dev.video.udp.channel.count}"/>
+        <property name="priority" value="${dev.video.udp.dispatcher.priority}"/>
+        <property name="videoChannelFactory" ref="videoChannelFactory"/>
+    </bean>
+    <bean id="videoChannelFactory" class="org.btik.video.server.push.VideoChannelFactory">
+        <property name="asyncTaskExecutor" ref="asyncTaskExecutor"/>
+        <property name="soSendTimeoutTicker" ref="soSendTimeoutTicker"/>
+    </bean>
+    <bean id="devAccessSever" class="org.btik.lightdev.dev.BioDevAccessServer">
+        <property name="accessServerPort" value="${dev.server.port}"/>
+        <property name="devEventDispatcher" ref="devEventDispatcher"/>
+        <property name="devAuth" ref="devAuth"/>
+    </bean>
+    <bean class="org.btik.lightdev.dev.ServerInfoPusher">
+        <property name="topic" value="${dev.discover.topic}"/>
+        <property name="multicastGroup" value="${dev.discover.multicast-group}"/>
+        <property name="multicastPort" value="${dev.discover.multicast-port}"/>
+        <property name="enable" value="${dev.discover.enable}"/>
+        <property name="asGatewayPort" value="${dev.discover.as-ap-port}"/>
+        <property name="clientTopic" value="${dev.discover.client-topic}"/>
+    </bean>
+    <bean id="lifecycleController" class="org.btik.context.handler.LifecycleController">
+        <property name="sortByIndex" value="true"/>
+    </bean>
+    <bean id="appContext" class="org.btik.light.server.platform.context.LightAppContext"/>
+    <bean class="org.btik.light.server.platform.event.LightSeverShutdownHandler"/>
+    <bean id="lightCache" class="org.btik.light.cache.LightCache">
+        <property name="tableClassMap">
+            <map key-type="java.lang.String" value-type="java.lang.String">
+                <entry key="t_dev_account"
+                       value="org.btik.light.server.platform.common.api.bean.dev.access.DevAccount"/>
+                <entry key="t_user" value="org.btik.light.server.platform.common.api.bean.user.User"/>
+                <entry key="t_sys_settings"
+                       value="org.btik.light.server.platform.common.api.bean.settings.SystemSettings"/>
+            </map>
+        </property>
+        <property name="dateFormat" value="${cache.data.date-format}"/>
+    </bean>
+    <bean id="devAuth" class="org.btik.lightdev.dev.auth.DevAuth">
+        <property name="lightDao" ref="defaultDao"/>
+        <property name="authTimeOut" value="${dev.auth.so.timeout}"/>
+    </bean>
+
+    <bean class="org.btik.light.server.platform.event.DefaultProperties">
+        <property name="defaultDevAccount" value="${dev.auth.default.dev-username}"/>
+        <property name="defaultDevPassword" value="${dev.auth.default.dev-password}"/>
+        <property name="defaultUserAccount" value="${dev.auth.default.user-account}"/>
+        <property name="defaultUserPassword" value="${dev.auth.default.user-password}"/>
+        <property name="defaultUserRemark" value="${dev.auth.default.user-remark}"/>
+        <property name="defaultSettings" ref="defaultSettings"/>
+    </bean>
+
+    <bean class="org.btik.p2p.ipv4.Ipv4P2pServer">
+        <property name="p2pServerPort" value="${p2p.server.port}"/>
+        <property name="enable" value="${p2p.server.enable}"/>
+    </bean>
+    <bean id="devAsyncTaskExecutor" class="org.btik.app.tool.AsyncTaskExecutor"/>
+    <bean class="org.btik.light.nbi.LightNBIServer">
+        <property name="nbiPort" value="${nbi.server.port}"/>
+        <property name="operationServer" ref="devManageServer"/>
+    </bean>
+    <bean id="camConnectHandler" class="org.btik.light.server.dev.manage.type.CamConnectHandler">
+        <property name="rpcServer" ref="defaultDevRpcServer"/>
+        <property name="deviceChannel" ref="deviceVideoStreamChannel"/>
+        <property name="videoChannelCount" value="${dev.video.udp.channel.count}"/>
+    </bean>
+    <bean id="connectHandlerMap" class="java.util.HashMap">
+        <constructor-arg>
+            <map key-type="java.lang.String" value-type="org.btik.light.server.dev.manage.ConnectHandler">
+                <entry key="CamQuadruped" value-ref="camConnectHandler"/>
+                <entry key="camCar" value-ref="camConnectHandler"/>
+                <entry key="Camera" value-ref="camConnectHandler"/>
+            </map>
+        </constructor-arg>
+    </bean>
+    <bean class="org.btik.light.server.dev.manage.DefaultDevEventListener">
+        <property name="connectHandlerMap" ref="connectHandlerMap"/>
+        <property name="devMetaService" ref="devMetaServiceImpl"/>
+        <property name="lightDao" ref="defaultDao"/>
+    </bean>
+</beans>

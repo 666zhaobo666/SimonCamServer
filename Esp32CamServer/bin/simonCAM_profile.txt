@@ -1,0 +1,10 @@
+#utf-8 用于linux下
+# 当前不生效,修改此文件去掉.txt后缀，即可作为该程序依赖的环境变量文件,而不用影响系统配置
+# 执行该命令复制一份 `cp simonCAM_profile.txt simonCAM_profile`
+# 然后修改 simonCAM_profile 文件
+
+# 指定JAVA 17的路径，或者加PATH变量将java17 bin目录加入PATH变量也可
+export JAVA_HOME=/lin/jdk-17.0.3.7
+
+# 数据库目录，路径不存在时默认app根目录的db文件夹
+export simonCAM_cache_dir=
